@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Donut Vault - Admin</title>
+  <link rel="icon" type="image/png" href="assets/site_art/donutvaultfavicon.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/admin.js"></script>
+  <style>
+    /* Admin-specific styles */
+    .admin-container {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      padding-top: 22px;
+      padding-bottom: 110px;
+    }
+
+    .login-container {
+      max-width: 400px;
+      margin: 60px auto;
+      padding: 32px;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .admin-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .admin-stats {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line);
+      flex: 1;
+    }
+
+    .stat-card h4 {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-card .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .map-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .map-list-item {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--line);
+      transition: border-color 180ms ease;
+    }
+
+    .map-list-item:hover {
+      border-color: rgba(211, 221, 234, 0.2);
+    }
+
+    .map-list-thumb {
+      width: 80px;
+      height: 60px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+    }
+
+    .map-list-info h4 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+    }
+
+    .map-list-info p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .map-list-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 180ms ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: rgba(211, 221, 234, 0.3);
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent-c);
+    }
+
+    .checkbox-group label {
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn-danger {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+    }
+
+    .btn-danger:hover {
+      border-color: rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .stock-badge {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .stock-badge.in-stock {
+      background: rgba(74, 222, 128, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    .stock-badge.out-of-stock {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .featured-badge {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      margin-left: 8px;
+    }
+
+    .modal-form {
+      max-width: 600px;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--text);
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      padding: 48px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    @media (max-width: 700px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .map-list-item {
+        grid-template-columns: 60px 1fr;
+      }
+
+      .map-list-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+      }
+
+      .admin-stats {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body data-page="admin">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img class="brand-mark" src="assets/site_art/donutvaultlogo.png" alt="Donut Vault logo" />
+        <div>
+          <h1>Donut Vault</h1>
+          <p>Admin Panel</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="browse.html">Browse</a>
+        <a href="cart.html">Cart</a>
+        
+        <button id="authBtn" class="btn" style="padding:8px 16px;">Login</button>
+        <a href="https://discord.gg/2qPxJ3xTU7" target="_blank" rel="noreferrer" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          Discord
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <!-- Login Section -->
+    <section id="loginSection" class="panel login-container">
+      <h2 style="margin:0 0 8px;">Admin Login</h2>
+      <p style="margin:0 0 24px;color:var(--muted);">Sign in to manage your gallery.</p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required placeholder="admin@example.com">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+      </form>
+
+      <div id="loginError" style="margin-top:16px;color:#f87171;display:none;"></div>
+    </section>
+
+    <!-- Admin Dashboard (hidden until logged in) -->
+    <section id="adminSection" style="display:none;">
+      <div class="admin-header">
+        <h2>Manage Maps</h2>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <span id="userEmail" style="color:var(--muted);font-size:0.9rem;"></span>
+          <button id="logoutBtn" class="btn" style="padding:8px 16px;">Logout</button>
+        </div>
+      </div>
+
+      <div class="admin-stats">
+        <div class="stat-card">
+          <h4>Total Maps</h4>
+          <div class="stat-value" id="totalMaps">0</div>
+        </div>
+        <div class="stat-card">
+          <h4>In Stock</h4>
+          <div class="stat-value" id="inStockMaps">0</div>
+        </div>
+        <div class="stat-card">
+          <h4>Featured</h4>
+          <div class="stat-value" id="featuredMaps">0</div>
+        </div>
+        <div class="stat-card">
+          <h4>Total Value</h4>
+          <div class="stat-value" id="totalValue">0</div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">Map Gallery</h3>
+        <button id="addMapBtn" class="btn btn-primary">+ Add Map</button>
+      </div>
+
+      <div id="mapListContainer">
+        <div class="map-list" id="mapList">
+          <!-- Maps will be loaded here -->
+        </div>
+        <div id="adminLoading" style="text-align:center;padding:40px;display:none;">
+          <div class="loading-spinner"></div>
+          <p style="margin-top:12px;color:var(--muted);">Loading maps...</p>
+        </div>
+        <div id="adminEmpty" class="empty-state" style="display:none;">
+          <p>No maps found. Add your first map!</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Map Form Modal -->
+  <div class="modal" id="mapFormModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-shell" style="max-width:700px;">
+      <button class="modal-close-btn" data-close-modal aria-label="Close modal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div style="padding:24px;overflow-y:auto;max-height:90vh;">
+        <h3 id="formTitle" style="margin:0 0 24px;">Add New Map</h3>
+        <form id="mapForm">
+          <input type="hidden" id="mapId">
+          
+          <div class="form-group">
+            <label for="mapName">Map Name *</label>
+            <input type="text" id="mapName" required placeholder="e.g., Angelic Hand">
+          </div>
+
+          <div class="form-group">
+            <label for="mapAuthor">Author *</label>
+            <input type="text" id="mapAuthor" required placeholder="e.g., Cask1">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="mapWidth">Width (blocks) *</label>
+              <input type="number" id="mapWidth" required min="1" placeholder="4">
+            </div>
+            <div class="form-group">
+              <label for="mapHeight">Height (blocks) *</label>
+              <input type="number" id="mapHeight" required min="1" placeholder="7">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="mapPrice">Price (in-game currency) *</label>
+            <input type="number" id="mapPrice" required min="0" placeholder="30000000">
+          </div>
+
+          <div class="form-group">
+            <label for="mapImageFile">Upload Image *</label>
+            <input type="file" id="mapImageFile" accept="image/*" required style="padding:10px;">
+            <p style="margin:6px 0 0;font-size:0.82rem;color:var(--muted);">Select an image to upload to the gallery.</p>
+            <div id="imagePreviewContainer" style="margin-top:12px;display:none;">
+              <img id="imagePreview" style="max-width:200px;max-height:150px;border-radius:12px;border:1px solid var(--line);" alt="Preview">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="mapTags">Tags (comma-separated)</label>
+            <input type="text" id="mapTags" placeholder="anime, hand, white">
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="mapInStock" checked>
+            <label for="mapInStock">In Stock (available for purchase)</label>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="mapFeatured">
+            <label for="mapFeatured">Featured (show on homepage)</label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn" data-close-modal>Cancel</button>
+            <button type="submit" class="btn btn-primary" id="submitBtn">Save Map</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal" id="deleteModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-shell" style="max-width:500px;">
+      <div style="padding:24px;">
+        <h3 style="margin:0 0 12px;">Delete Map</h3>
+        <p style="color:var(--muted);margin:0 0 24px;">
+          Are you sure you want to delete "<span id="deleteMapName"></span>"? This action cannot be undone.
+        </p>
+        <div class="form-actions">
+          <button class="btn" data-close-modal>Cancel</button>
+          <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="notice-bar" id="noticeBar" style="display:none;">
+  </footer>
+</body>
+</html>
