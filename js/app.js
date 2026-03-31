@@ -286,7 +286,7 @@ function getVisibleMaps() {
 // }
 
 function getOrderEndpoint() {
-  return "/api/create-order";
+  return DEFAULT_ORDER_ENDPOINT;
 }
 
 /**
