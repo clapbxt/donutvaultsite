@@ -269,20 +269,24 @@ function getVisibleMaps() {
   });
 }
 
+// function getOrderEndpoint() {
+//   // Check if the page is loaded over HTTPS
+//   const isHTTPS = window.location.protocol === "https:";
+  
+//   // Get the configured endpoint
+//   let endpoint = document.body?.dataset.orderEndpoint || window.ORDER_ENDPOINT || DEFAULT_ORDER_ENDPOINT;
+  
+//   // If the page is HTTPS but endpoint is HTTP, switch to HTTPS
+//   // This assumes your API server has SSL configured on the same port
+//   if (isHTTPS && endpoint.startsWith("http://")) {
+//     endpoint = endpoint.replace("http://", "https://");
+//   }
+  
+//   return endpoint;
+// }
+
 function getOrderEndpoint() {
-  // Check if the page is loaded over HTTPS
-  const isHTTPS = window.location.protocol === "https:";
-  
-  // Get the configured endpoint
-  let endpoint = document.body?.dataset.orderEndpoint || window.ORDER_ENDPOINT || DEFAULT_ORDER_ENDPOINT;
-  
-  // If the page is HTTPS but endpoint is HTTP, switch to HTTPS
-  // This assumes your API server has SSL configured on the same port
-  if (isHTTPS && endpoint.startsWith("http://")) {
-    endpoint = endpoint.replace("http://", "https://");
-  }
-  
-  return endpoint;
+  return "/api/create-order";
 }
 
 /**
