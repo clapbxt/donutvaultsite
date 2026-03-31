@@ -1,4 +1,4 @@
-const DEFAULT_ORDER_ENDPOINT = "/api/create-order";
+const DEFAULT_ORDER_ENDPOINT = "/.netlify/functions/create-order";
 const STORAGE_KEY = "map_gallery_cart_v1";
 const NOTICE_KEY = "map_gallery_notice_closed_v1";
 
